@@ -26,7 +26,7 @@ function Register() {
     <div className="auth-wrapper">
       <div className="auth-page">
         <div className="auth-brand">
-          <h1>BlogSpace</h1>
+          <h1>MySocialSpace</h1>
           <p>Join the community. It's quick and easy.</p>
         </div>
         <div className="auth-card">

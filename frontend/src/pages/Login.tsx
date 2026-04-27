@@ -25,7 +25,7 @@ function Login() {
     <div className="auth-wrapper">
       <div className="auth-page">
         <div className="auth-brand">
-          <h1>BlogSpace</h1>
+          <h1>MySocialSpace</h1>
           <p>Connect with writers and share your stories with the world.</p>
         </div>
         <div className="auth-card">

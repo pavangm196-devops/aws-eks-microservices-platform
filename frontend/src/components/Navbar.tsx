@@ -9,7 +9,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="container">
         <Link to="/" className="logo">
-          BlogSpace
+          MySocialSpace
         </Link>
         <div className="nav-links">
           {isAuthenticated ? (
