@@ -2,11 +2,12 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 env:
-  AWS_REGION: ap-south-1
-  EKS_CLUSTER: blog-cluster
+  AWS_REGION: us-west-2
+  EKS_CLUSTER: project-k8s-cluster
+  AWS_ACCOUNT_ID: 508262720940
 
 jobs:
   detect-changes:
@@ -46,13 +47,14 @@ jobs:
         id: ecr
       - name: Build & Push
         run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/blog-auth-service:${{ github.sha }}
+          IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-auth-service:${{ github.sha }}
           docker build -t $IMAGE ./services/auth-service
           docker push $IMAGE
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/auth-service auth-service=${{ steps.ecr.outputs.registry }}/blog-auth-service:${{ github.sha }} -n blog
+          kubectl set image deployment/auth-service auth-service=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-auth-service:${{ github.sha }} -n blog
+          kubectl rollout status deployment/auth-service -n blog --timeout=120s
 
   build-and-deploy-post:
     needs: detect-changes
@@ -69,13 +71,14 @@ jobs:
         id: ecr
       - name: Build & Push
         run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/blog-post-service:${{ github.sha }}
+          IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-post-service:${{ github.sha }}
           docker build -t $IMAGE ./services/post-service
           docker push $IMAGE
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/post-service post-service=${{ steps.ecr.outputs.registry }}/blog-post-service:${{ github.sha }} -n blog
+          kubectl set image deployment/post-service post-service=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-post-service:${{ github.sha }} -n blog
+          kubectl rollout status deployment/post-service -n blog --timeout=120s
 
   build-and-deploy-comment:
     needs: detect-changes
@@ -92,13 +95,14 @@ jobs:
         id: ecr
       - name: Build & Push
         run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/blog-comment-service:${{ github.sha }}
+          IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-comment-service:${{ github.sha }}
           docker build -t $IMAGE ./services/comment-service
           docker push $IMAGE
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/comment-service comment-service=${{ steps.ecr.outputs.registry }}/blog-comment-service:${{ github.sha }} -n blog
+          kubectl set image deployment/comment-service comment-service=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-comment-service:${{ github.sha }} -n blog
+          kubectl rollout status deployment/comment-service -n blog --timeout=120s
 
   build-and-deploy-frontend:
     needs: detect-changes
@@ -106,19 +110,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - uses: aws-actions/amazon-ecr-login@v2
-        id: ecr
-      - name: Build & Push
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push frontend image
         run: |
-          IMAGE=${{ steps.ecr.outputs.registry }}/blog-frontend:${{ github.sha }}
+          IMAGE=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-frontend:${{ github.sha }}
           docker build -t $IMAGE ./frontend
           docker push $IMAGE
+          docker tag $IMAGE ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-frontend:latest
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-frontend:latest
+
       - name: Deploy to EKS
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
-          kubectl set image deployment/frontend frontend=${{ steps.ecr.outputs.registry }}/blog-frontend:${{ github.sha }} -n blog
+          kubectl set image deployment/frontend frontend=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/blog-frontend:${{ github.sha }} -n blog
+          kubectl rollout status deployment/frontend -n blog --timeout=120s
