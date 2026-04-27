@@ -68,7 +68,7 @@ function Home() {
                   <img key={i} src={src} alt="member" className="hero-member-img" style={{ zIndex: 5 - i }} />
                 ))}
               </div>
-              <span className="hero-member-text">12,000+ happy members</span>
+              <span className="hero-member-text">20,000+ happy members</span>
             </div>
             <div className="hero-actions">
               <Link to="/register" className="btn hero-btn-primary">Join the Community</Link>
