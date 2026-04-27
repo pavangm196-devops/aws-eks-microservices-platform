@@ -8,9 +8,9 @@ metadata:
 
 managedNodeGroups:
   - name: blog-workers
-    instanceType: t3a.medium
-    minSize: 2
-    maxSize: 5
+    instanceType: t3.medium
+    minSize: 3
+    maxSize: 3
     desiredCapacity: 3
     volumeSize: 20
     amiFamily: AmazonLinux2
